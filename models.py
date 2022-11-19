@@ -26,7 +26,8 @@ class ModelManager:
         
         # X_train, y_train =  self.train_dataset.pre_process.balance_dataset(X_train, y_train, X_test, y_test)
 
-
+        print("Training set size: " + str(len(X_train)))
+        print("Test set size: " + str(len(X_test)))
         # from sklearn.feature_selection import VarianceThreshold
         # from sklearn.feature_selection import SelectKBest
         # from sklearn.feature_selection import f_regression
@@ -81,6 +82,7 @@ class ModelManager:
         from sklearn.model_selection import cross_val_score
 
         models = [RandomForestClassifier(n_estimators=200, random_state=0)]
+        # models = [KNeighborsClassifier()]
         # models = [RandomForestClassifier(n_estimators=200, random_state=0), KNeighborsClassifier(), GaussianNB(), LogisticRegression(penalty='l2', C=1.0)]
 
         best_accuracy = 0

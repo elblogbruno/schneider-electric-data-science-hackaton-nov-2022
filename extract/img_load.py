@@ -51,12 +51,12 @@ def get_img_train_dataset(path, img_size=0, black_and_white=False):
     print("Done. " + str(len(images)) + " images loaded in " + str(time.time() - start_time) + " seconds.")
 
     # make sure images are from same size 
-    # img_size = images[0].shape
-    # print("Images are : " + str(img_size))
-    # for img in images:
-    #     if img.shape != img_size:
-    #         print("Image size mismatch: " + str(img.shape))
-    #         raise Exception('Invalid image size')
+    img_size = images[0].shape
+    print("Images are : " + str(img_size))
+    for img in images:
+        if img.shape != img_size:
+            print("Image size mismatch: " + str(img.shape))
+            raise Exception('Invalid image size')
     
     # return np.array(images)
     return images
@@ -69,6 +69,7 @@ def load_image(chunk, images, img_size, black_and_white):
                 img = cv2.resize(img, (img_size, img_size))
             if black_and_white:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            images.append(img.flatten())
+            # images.append(img.flatten())
+            images.append(img)
         else:
             print("Image not found: " + f)

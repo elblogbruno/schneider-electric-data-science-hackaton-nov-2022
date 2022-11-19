@@ -1,1 +1,3 @@
-kornia
+tika
+scikit-learn    
+imbalanced-learn
