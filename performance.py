@@ -7,10 +7,6 @@ from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics import auc
 import matplotlib.pyplot as plt
 
-import numpy as np
-
-from sklearn.ensemble import RandomForestClassifier
-
 # 4 Calcular performance de los modelos
 #### 4.1 F-Score
 #### 4.2 Precision

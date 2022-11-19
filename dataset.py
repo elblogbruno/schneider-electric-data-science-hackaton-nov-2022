@@ -3,12 +3,13 @@ from data_preprocessing import PrepareDataset
 from extract.json_extract import get_json_train_dataset
 from extract.csv_extract import get_csv_train_dataset
 from extract.pdf_extract import get_pdf_train_dataset
+from extract.img_load import get_img_train_dataset
 
 import pandas as pd
 import os
 
 class Dataset(object):
-    def __init__(self, type='csv', file_name='', target_variable_name='pollutant', sep=None, headers=None, child_datasets = []):
+    def __init__(self, type='csv', file_name='', target_variable_name='pollutant', sep=None, headers=None, child_datasets = [], img_size=0):
 
         if len(child_datasets) > 0:
             print("Concatenating datasets...")
@@ -20,6 +21,7 @@ class Dataset(object):
             self.file_name = file_name
             self.sep = sep
             self.headers = headers
+            self.img_size = img_size
 
             self.dataset = self.get_dataset(type)
         
@@ -34,6 +36,9 @@ class Dataset(object):
 
         return dataset
 
+    """
+    Depending on type of dataset it will return a DataFrame or a list of images
+    """
     def get_dataset(self, type='csv'):
         print("Getting dataset... {0}".format(self.file_name))
 
@@ -43,6 +48,8 @@ class Dataset(object):
             return get_json_train_dataset(self.file_name)
         elif type == 'pdf':
             return get_pdf_train_dataset()
+        elif type == 'img':
+            return get_img_train_dataset(self.file_name, self.img_size)
         else:
             raise Exception('Invalid type')
 

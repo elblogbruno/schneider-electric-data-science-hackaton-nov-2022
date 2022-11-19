@@ -1,20 +1,17 @@
-from cgi import test
-import pandas as pd
 from dataset import Dataset
 import os
 from models import ModelManager
 
 from store_models import StoreModels
+import cv2
 
 # TAREAS
 # 1. Cargar Datos 
-    # 1.1 Cargar Datos de los PDF 
-    # 1.2 Cargar Datos de los Excel (Hecho)
-    # 1.3 Cargar Datos de los CSV (Hecho)
+    # 1.1 Cargar Datos de Imagenes des de el csv 
 
 # 2. Procesar Datos    
-    # 2.1 Ver si el dataset tiene alguna columna con valores nulos o vacios [HECHO]
-    # 2.4 Ver si el dataset esta desbalanceado (LO ESTA) [HECHO]
+    # 2.1 Ver si el dataset tiene alguna columna con valores nulos o vacios
+    # 2.4 Ver si el dataset esta desbalanceado
         # 2.4.1 Arreglarlo 
     # 2.5 Ver si hay que categorizar los datos 
     # 2.6 Ver si hay que normalizar los datos
@@ -22,84 +19,39 @@ from store_models import StoreModels
     
     
 # 3 Entrenar Modelos
-    # KNN [HECHO]
+    # KNN 
     # SVM
-    # Random Forest [HECHO]
-    # Naive Bayes [HECHO]
+    # Random Forest 
+    # Naive Bayes 
     # Decision Tree
-    # Logistic Regression [HECHO]
+    # Logistic Regression 
 
 # 4 Calcular performance de los modelos
-    # 4.1 F1-Score [HECHO]
-    # 4.2 Precision [HECHO]
-    # 4.3 Recall [HECHO]
-    # 4.4 Accuracy [HECHO]
+    # 4.1 F1-Score 
+    # 4.2 Precision 
+    # 4.3 Recall 
+    # 4.4 Accuracy 
 
 # 5 Guardar Modelos 
     # 5.1 Guardar Graficas
-        # 5.2 ROC Curve [HECHO]
-        # 5.3 Precision-Recall Curve [HECHO]
+        # 5.2 ROC Curve 
+        # 5.3 Precision-Recall Curve 
         # 5.4 Confusion Matrix
     # 5.2 GUARDAR .CSV amb els resultats de predir per a cadascuna de les files de test_x.csv
 
-# pollutant: Type of pollutant emitted (Target variable). In order to follow the same standard, you must encode this variables as follows:
+# label: In this column you will have the following categories
 
-# pollutant	number
-# Nitrogen oxides (NOX)	0
-# Carbon dioxide (CO2)	1
-# Methane (CH4)	2
+# 'Plantation':Encoded with number 0, Network of rectangular plantation blocks, connected by a well-defined road grid. In hilly areas the layout of the plantation may follow topographic features. In this group you can find: Oil Palm Plantation, Timber Plantation and Other large-scale plantations.
+# 'Grassland/Shrubland': Encoded with number 1, Large homogeneous areas with few or sparse shrubs or trees, and which are generally persistent. Distinguished by the absence of signs of agriculture, such as clearly defined field boundaries.
+# 'Smallholder Agriculture': Encoded with number 2, Small scale area, in which you can find deforestation covered by agriculture, mixed plantation or oil palm plantation.
 
 
 
 def load_and_process_data(target_variable_name, force = False):
-    # headers_to_remove = ["REPORTER NAME",  "FacilityInspireID", 'facilityName', 'targetRelease', 'MONTH', 'DAY', 'CONTINENT', 'max_wind_speed', 'min_wind_speed', 'avg_wind_speed', 'max_temp', 'min_temp', 'City']
-    # headers_to_remove = ['targetRelease', 'CONTINENT', 'DAY', 'MONTH', 'max_wind_speed', 'min_wind_speed', 'avg_wind_speed', 'max_temp', 'min_temp', 'avg_temp']
-    # numerical_headers = ['DAY WITH FOGS', 'reportingYear']
-    headers_to_remove = ['CONTINENT', 'CITY ID', 'DAY', 'REPORTER NAME', 'targetRelease',  'MONTH', 'reportingYear','max_temp',  'avg_temp', 'max_wind_speed', 'min_wind_speed', 'avg_wind_speed']
-    numerical_headers = ['DAY WITH FOGS', 'min_temp']
-
-
     if os.path.exists('result/train_processed.csv') == False or force:
         print("Loading dataset...")
-        dataset_csv_1 = Dataset(type='csv', file_name='train/train1.csv', target_variable_name=target_variable_name)
-        dataset_csv_1.remove_headers(headers_to_remove)
+        train_dataset = Dataset(type='csv', file_name='train/train.csv', target_variable_name=target_variable_name)
 
-        headers = dataset_csv_1.get_headers()
-
-        dataset_csv_2 = Dataset(type='csv', file_name='train/train2.csv', sep=';', target_variable_name=target_variable_name)
-        dataset_csv_2.remove_headers(headers_to_remove)
-        
-        dataset_json_1 = Dataset(type='json', file_name='first', target_variable_name=target_variable_name)
-        headers_json = dataset_json_1.get_headers()
-        dataset_json_2 = Dataset(type='json', file_name='second', target_variable_name=target_variable_name)
-        dataset_json_3 = Dataset(type='json', file_name='third', target_variable_name=target_variable_name)
-
-        dataset_pdf = Dataset(type='pdf', file_name='pdf', target_variable_name=target_variable_name)
-        dataset_pdf.remove_headers(headers_to_remove)
-        dataset_pdf.process_data(numerical_headers)
-
-
-        # delete headers that are not in dataset_json_1 and dataset_json_2
-        same_headers = [header for header in headers_json if header in headers]
-        diff_headers = [header for header in headers_json if header not in headers]
-
-        # diff_headers.append(headers_to_remove)
-        print(same_headers)
-        print(diff_headers)
-
-        dataset_json_1.remove_headers(diff_headers)
-        dataset_json_2.remove_headers(diff_headers)
-        dataset_json_3.remove_headers(diff_headers)
-        
-        dataset_csv_1.process_data(numerical_headers)
-        dataset_csv_2.process_data(numerical_headers)
-
-        dataset_json_1.process_data(numerical_headers)
-        dataset_json_2.process_data(numerical_headers)
-        dataset_json_3.process_data(numerical_headers)
-
-        train_dataset = Dataset(child_datasets=[dataset_csv_1, dataset_csv_2, dataset_json_1, dataset_json_2, dataset_json_3, dataset_pdf], target_variable_name=target_variable_name)
-        
         # get columns that are strings and categorical
         categorical_columns = train_dataset.pre_process.get_categorical_columns()
         train_dataset.pre_process.categorize_data(categorical_columns)     
@@ -108,18 +60,19 @@ def load_and_process_data(target_variable_name, force = False):
         print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset))
     
 
+        # img_dataset_train = Dataset(type='img', file_name='train_test_data/train', img_size=256) # 256x256
+        img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # 256x256
+        
+        # try to load the images from the csv
+        cv2.imshow('image', img_dataset_train.dataset[0])
+        cv2.waitKey(0)
+
     else:
         print("Loading dataset from folder...")
         train_dataset = Dataset(type='csv', file_name='result/train_processed.csv', target_variable_name=target_variable_name)
         
     if os.path.exists('result/test_processed.csv') == False or force:
-        test_dataset = Dataset(type='csv', file_name='test/test_x.csv', target_variable_name=target_variable_name)
-        
-        test_dataset.remove_headers(['EPRTRAnnexIMainActivityCode', 'test_index'])
-        
-        test_dataset.remove_headers(headers_to_remove)
-        
-        test_dataset.process_data(numerical_headers)
+        test_dataset = Dataset(type='csv', file_name='test/test.csv', target_variable_name=target_variable_name)
 
         categorical_columns = test_dataset.pre_process.get_categorical_columns()
         test_dataset.pre_process.categorize_data(categorical_columns)      # categorical_columns = ['pollutant']
@@ -132,6 +85,7 @@ def load_and_process_data(target_variable_name, force = False):
     
 
 def save_final_result(test_dataset, model):
+    import pandas as pd
     print("Saving final result...")
     pred_y = model.predict(test_dataset.dataset)
 
@@ -146,9 +100,9 @@ def save_final_result(test_dataset, model):
 
 
 if __name__ == '__main__':
-    target_variable_name = 'pollutant'
+    target_variable_name = 'label'
 
-    train_dataset, test_dataset = load_and_process_data(target_variable_name, force= False)
+    train_dataset, test_dataset = load_and_process_data(target_variable_name, force= True)
 
     print(len(train_dataset.dataset))
     print(len(test_dataset.dataset))
