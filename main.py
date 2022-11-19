@@ -191,6 +191,7 @@ def save_final_result(test_dataset, model):
     final_dataset.to_json('predictions.json')
 
 def get_features(img_dataset_train, img_size=332, name='train', black_and_white = False):
+    import numpy as np
     name_file = name+'_features.npy'
     
     if (os.path.exists(name_file) == True):
