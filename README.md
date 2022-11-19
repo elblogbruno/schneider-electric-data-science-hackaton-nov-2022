@@ -20,6 +20,10 @@ This is our result
 
 `{'f1_score': 0.809, 'precision': 0.786, 'recall': 0.833, 'accuracy': 0.714}`
 
+![image](https://user-images.githubusercontent.com/10481058/202874488-d804ae01-da56-4d28-a4bc-80a426e54838.png)
+
+![image](https://user-images.githubusercontent.com/10481058/202874493-1fd626b2-c012-4924-be45-e9d9943abc7c.png)
+
 ## Code structure
 
 We have all datasets working inside a same Class call dataset. Thus they are all interoperable, and we can add custom functions to make our code cleaner ad our life.
@@ -28,6 +32,7 @@ We have all datasets working inside a same Class call dataset. Thus they are all
 - Balance.py does the balancing of the dataset
 - Custom Image Dataset is a wrapper for our dtayaset class to work with pytorch efficiently.
 
+
 ## How to execute the demonstration?
 
 Run the main.py example and install required libraries with PIP:
@@ -35,4 +40,5 @@ Run the main.py example and install required libraries with PIP:
 - `pip install -r requirements.txt`
 - `python main.py`
 
-The code will automatically efficiently load the train and test images, train the resnet neural network and do some testing.
+The code will automatically efficiently load the train and test images, train the resnet neural network and do some testing. We have developed parts of the code, like reading all the images with multithreading.
+
