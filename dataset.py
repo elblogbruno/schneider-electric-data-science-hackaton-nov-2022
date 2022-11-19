@@ -9,7 +9,7 @@ import pandas as pd
 import os
 
 class Dataset(object):
-    def __init__(self, type='csv', file_name='', target_variable_name='pollutant', sep=None, headers=None, child_datasets = [], img_size=0):
+    def __init__(self, type='csv', file_name='', target_variable_name='pollutant', sep=None, headers=None, child_datasets = [], img_size=0, black_and_white=False):
 
         if len(child_datasets) > 0:
             print("Concatenating datasets...")
@@ -22,11 +22,14 @@ class Dataset(object):
             self.sep = sep
             self.headers = headers
             self.img_size = img_size
+            self.black_and_white = black_and_white
 
             self.dataset = self.get_dataset(type)
         
         self.pre_process = PrepareDataset(self.dataset, name=target_variable_name, target_variable_name=target_variable_name)
 
+    def get_target_variable(self):
+        return self.pre_process.target_variable_name
 
     def concat_datasets(self):
         dataset = pd.DataFrame()
@@ -49,7 +52,7 @@ class Dataset(object):
         elif type == 'pdf':
             return get_pdf_train_dataset()
         elif type == 'img':
-            return get_img_train_dataset(self.file_name, self.img_size)
+            return get_img_train_dataset(self.file_name, self.img_size, self.black_and_white)
         else:
             raise Exception('Invalid type')
 

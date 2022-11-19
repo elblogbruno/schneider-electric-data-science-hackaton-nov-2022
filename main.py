@@ -1,7 +1,7 @@
 from dataset import Dataset
 import os
 from models import ModelManager
-
+from balance import start_balancing
 from store_models import StoreModels
 import cv2
 
@@ -49,33 +49,53 @@ import cv2
 
 def load_and_process_data(target_variable_name, force = False):
     if os.path.exists('result/train_processed.csv') == False or force:
-        print("Loading dataset...")
+        print("[MAIN] Loading dataset...")
+        
         train_dataset = Dataset(type='csv', file_name='train/train.csv', target_variable_name=target_variable_name)
+        # train_dataset.dataset es un DataFrame de pandas con el csv
 
         # get columns that are strings and categorical
-        categorical_columns = train_dataset.pre_process.get_categorical_columns()
-        train_dataset.pre_process.categorize_data(categorical_columns)     
+        # categorical_columns = train_dataset.pre_process.get_categorical_columns()
+        # train_dataset.pre_process.categorize_data(categorical_columns)     
 
-        train_dataset.save_dataset(file_name='result/train_processed.csv')
+        
+        # train_dataset.save_dataset(file_name='result/train_processed.csv')
+        
+        print("[MAIN] DATASET BALANCED")
         print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset))
-    
+            
 
         # img_dataset_train = Dataset(type='img', file_name='train_test_data/train', img_size=256) # 256x256
-        img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # 256x256
+        # img_dataset_train = Dataset(type='img', file_name='train_test_data/train', img_size=256, black_and_white=True) # 256x256 black and white
+        img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
         
-        # try to load the images from the csv
-        cv2.imshow('image', img_dataset_train.dataset[0])
-        cv2.waitKey(0)
+        # img_dataset_train.dataset seria un array de imagenes 
+        # img_dataset_train.dataset[0] seria la primera imagen
 
+
+        # try to load the images from the csv
+        # cv2.imshow('image', img_dataset_train.dataset[0])
+        # cv2.waitKey(0)
+
+        # do data augmentation
+        train_dataset, img_dataset_train = start_balancing(train_dataset, img_dataset_train, type='oversampling', augment_images=True)
+
+        print("[MAIN] Finally is DATASET BALANCED?")
+        print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset))
+
+        # save the dataset augmented with the images so we don't have to do it again
+        train_dataset.save_dataset(file_name='result/train_processed.csv')
+            
     else:
-        print("Loading dataset from folder...")
+        print("[MAIN] Loading dataset from folder...")
         train_dataset = Dataset(type='csv', file_name='result/train_processed.csv', target_variable_name=target_variable_name)
+        img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
         
     if os.path.exists('result/test_processed.csv') == False or force:
         test_dataset = Dataset(type='csv', file_name='test/test.csv', target_variable_name=target_variable_name)
-
-        categorical_columns = test_dataset.pre_process.get_categorical_columns()
-        test_dataset.pre_process.categorize_data(categorical_columns)      # categorical_columns = ['pollutant']
+        
+        # categorical_columns = test_dataset.pre_process.get_categorical_columns()
+        # test_dataset.pre_process.categorize_data(categorical_columns)      # categorical_columns = ['pollutant']
         
         test_dataset.save_dataset(file_name='result/test_processed.csv')
     else:
@@ -86,7 +106,7 @@ def load_and_process_data(target_variable_name, force = False):
 
 def save_final_result(test_dataset, model):
     import pandas as pd
-    print("Saving final result...")
+    print("[MAIN] Saving final result...")
     pred_y = model.predict(test_dataset.dataset)
 
     # Empty dataset with two columns (target variable and predicted value)
@@ -102,10 +122,10 @@ def save_final_result(test_dataset, model):
 if __name__ == '__main__':
     target_variable_name = 'label'
 
-    train_dataset, test_dataset = load_and_process_data(target_variable_name, force= True)
+    train_dataset, test_dataset = load_and_process_data(target_variable_name, force= False)
 
-    print(len(train_dataset.dataset))
-    print(len(test_dataset.dataset))
+    print("[MAIN] TRAIN SIZE:" + str(len(train_dataset.dataset)))
+    print("[MAIN] TEST_SIZE:" + str(len(test_dataset.dataset)))
 
     train_dataset.pre_process.show_dataset_correlation_heatmap()
 
