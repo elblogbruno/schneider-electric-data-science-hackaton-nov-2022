@@ -4,6 +4,7 @@ from models import ModelManager
 from balance import start_balancing
 from store_models import StoreModels
 import cv2
+import pandas as pd
 
 # TAREAS
 # 1. Cargar Datos 
@@ -48,8 +49,8 @@ import cv2
 
 
 def load_and_process_data(target_variable_name, force = False):
-    if os.path.exists('result/train_processed.csv') == False or force:
-        print("[MAIN] Loading dataset...")
+    if os.path.exists('result/train_processed_with_images.csv') == False or force:
+        print("[MAIN] First time executing...")
         
         train_dataset = Dataset(type='csv', file_name='train/train.csv', target_variable_name=target_variable_name)
         # train_dataset.dataset es un DataFrame de pandas con el csv
@@ -57,8 +58,6 @@ def load_and_process_data(target_variable_name, force = False):
         # get columns that are strings and categorical
         # categorical_columns = train_dataset.pre_process.get_categorical_columns()
         # train_dataset.pre_process.categorize_data(categorical_columns)     
-
-        
         # train_dataset.save_dataset(file_name='result/train_processed.csv')
         
         print("[MAIN] DATASET BALANCED")
@@ -85,24 +84,82 @@ def load_and_process_data(target_variable_name, force = False):
 
         # save the dataset augmented with the images so we don't have to do it again
         train_dataset.save_dataset(file_name='result/train_processed.csv')
+
+        # train_dataset.process_data() # process the data and check if there are any null values
+
+        print(len(train_dataset.dataset))
+        print(len(img_dataset_train.dataset))
+        # add a new column with the images numpy arrays to the dataset
+        # train_dataset.dataset.insert(0, 'images', img_dataset_train.dataset.tolist(), True)
+        img_list = img_dataset_train.dataset
+        print(len(img_list))
+
+        train_dataset.dataset.loc[:, 'images'] = img_list
+
+        print("[MAIN] DATASET JOINED WITH IMAGES")
+        train_dataset.save_dataset(file_name='result/train_processed_with_images.csv')
             
     else:
         print("[MAIN] Loading dataset from folder...")
         train_dataset = Dataset(type='csv', file_name='result/train_processed.csv', target_variable_name=target_variable_name)
         img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
+
+        join_data_with_images(img_dataset_train, train_dataset)
+
+        train_dataset.save_dataset(file_name='result/train_processed_with_images.csv')
         
-    if os.path.exists('result/test_processed.csv') == False or force:
+        train_dataset.remove_headers(['example_path'])
+
+    print("[MAIN] Loading test dataset...")
+    
+    if os.path.exists('result/test_processed_with_images.csv') == False or force:
         test_dataset = Dataset(type='csv', file_name='test/test.csv', target_variable_name=target_variable_name)
         
         # categorical_columns = test_dataset.pre_process.get_categorical_columns()
         # test_dataset.pre_process.categorize_data(categorical_columns)      # categorical_columns = ['pollutant']
-        
-        test_dataset.save_dataset(file_name='result/test_processed.csv')
+        img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
+        print(len(test_dataset.dataset))
+        print(len(img_dataset_test.dataset))
+        # add a new column with the images numpy arrays to the dataset
+        # train_dataset.dataset.insert(0, 'images', img_dataset_train.dataset.tolist(), True)
+        img_list = img_dataset_test.dataset
+        print(len(img_list))
+
+        test_dataset.dataset.loc[:, 'images'] = img_list
+        test_dataset.dataset = test_dataset.dataset.astype({'images': object})
+
+        print("[MAIN] DATASET JOINED WITH IMAGES")
+        test_dataset.save_dataset(file_name='result/test_processed_with_images.csv')
+
+        # test_dataset.save_dataset(file_name='result/test_processed.csv')
     else:
+        print("[MAIN] Loading test dataset from folder...")
         test_dataset = Dataset(type='csv', file_name='result/test_processed.csv', target_variable_name=target_variable_name)
+        img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
+
+        join_data_with_images(img_dataset_test, test_dataset)
+
+        print("[MAIN] DATASET JOINED WITH IMAGES")
+        test_dataset.save_dataset(file_name='result/test_processed_with_images.csv')
 
     return train_dataset, test_dataset
+
+def join_data_with_images(img_dataset, dataset):
+    # print(img_dataset_train.dataset[0])
+    # cv2.imshow('image', img_dataset_train.dataset[0])
+    # cv2.waitKey(0)
+    labels = dataset.dataset['label'].tolist()
+    dataset.dataset = pd.DataFrame(img_dataset.dataset)
     
+    # add a new column that each row has the image numpy array
+    # img_list = img_dataset.dataset
+    dataset.dataset['label'] = labels
+    
+    # set astype to object so we can save the images as numpy arrays
+    # dataset.dataset = dataset.dataset.astype({'images': object})
+
+    # dataset.dataset['images'] = dataset.dataset['images'].astype('object')
+    return img_dataset, dataset
 
 def save_final_result(test_dataset, model):
     import pandas as pd
@@ -110,30 +167,32 @@ def save_final_result(test_dataset, model):
     pred_y = model.predict(test_dataset.dataset)
 
     # Empty dataset with two columns (target variable and predicted value)
-    final_dataset = pd.DataFrame(columns=['test_index', 'pollutant'])  
+    final_dataset = pd.DataFrame(columns=['test_index', 'label'])  
     final_dataset['test_index'] = range(len(test_dataset.dataset))
-    final_dataset['pollutant'] = pred_y
+    final_dataset['label'] = pred_y
 
-    final_dataset.to_csv('predictions.csv', index = False, columns=['test_index', 'pollutant']) 
+    final_dataset.to_csv('predictions.csv', index = False, columns=['test_index', 'label']) 
     final_dataset.to_json('predictions.json')
 
 
 
 if __name__ == '__main__':
     target_variable_name = 'label'
-
+    
     train_dataset, test_dataset = load_and_process_data(target_variable_name, force= False)
 
-    print("[MAIN] TRAIN SIZE:" + str(len(train_dataset.dataset)))
-    print("[MAIN] TEST_SIZE:" + str(len(test_dataset.dataset)))
+    print(train_dataset.dataset.head())
 
-    train_dataset.pre_process.show_dataset_correlation_heatmap()
+    # print("[MAIN] TRAIN SIZE:" + str(len(train_dataset.dataset)))
+    # print("[MAIN] TEST_SIZE:" + str(len(test_dataset.dataset)))
 
-    highest_corrl = train_dataset.pre_process.get_highest_correlation()
+    # train_dataset.pre_process.show_dataset_correlation_heatmap()
+
+    # highest_corrl = train_dataset.pre_process.get_highest_correlation()
 
     model_manager = ModelManager(train_dataset, test_dataset, target_variable_name)
     model = model_manager.get_best_model()
-    save_final_result(test_dataset, model)
+    # save_final_result(test_dataset, model)
 
     # model_manager.find_best_parameter(model)
 

@@ -28,6 +28,12 @@ class Dataset(object):
         
         self.pre_process = PrepareDataset(self.dataset, name=target_variable_name, target_variable_name=target_variable_name)
 
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        return self.dataset.iloc[idx], self.dataset.iloc[idx][self.pre_process.target_variable_name]
+
     def get_target_variable(self):
         return self.pre_process.target_variable_name
 
@@ -72,7 +78,7 @@ class Dataset(object):
     def get_data(self):
         return self.dataset
 
-    def process_data(self, numerical_headers):
+    def process_data(self, numerical_headers=None):
         print("Preprocessing dataset... {0}".format(self.file_name))
         self.dataset = self.pre_process.preprocess_dataset(numerical_headers)
         print("Done")

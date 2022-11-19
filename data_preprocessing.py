@@ -10,7 +10,7 @@ class PrepareDataset:
         self.name = name
         self.target_variable_name = target_variable_name
 
-    def preprocess_dataset(self, numerical_headers):
+    def preprocess_dataset(self, numerical_headers= None):
         self.dataset = self._preprocess_dataset(numerical_headers)
         return self.dataset
 
@@ -170,7 +170,7 @@ class PrepareDataset:
             print(e)
             pass
         
-    def _preprocess_dataset(self, numerical_headers):
+    def _preprocess_dataset(self, numerical_headers = None):
         print("Checking datase Balance")
         print(self.get_dataset_balance(self.dataset))
         
@@ -181,6 +181,8 @@ class PrepareDataset:
             print("Fixing dataset Nan Columns...")
             self.dataset = self._fix_nan_columns(self.dataset)
 
-        self.fix_columns_type(numerical_headers)
+        if numerical_headers:
+            print("Fixing dataset columns type...")
+            self.dataset = self.fix_columns_type(numerical_headers)
 
         return self.dataset

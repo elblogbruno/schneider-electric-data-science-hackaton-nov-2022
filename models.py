@@ -24,40 +24,40 @@ class ModelManager:
         # split dataset into training and test set
         X_train, X_test, y_train, y_test = train_test_split(Train_x, Train_y, test_size=0.2, random_state=0)
         
-        X_train, y_train =  self.train_dataset.pre_process.balance_dataset(X_train, y_train, X_test, y_test)
+        # X_train, y_train =  self.train_dataset.pre_process.balance_dataset(X_train, y_train, X_test, y_test)
 
 
-        from sklearn.feature_selection import VarianceThreshold
-        from sklearn.feature_selection import SelectKBest
-        from sklearn.feature_selection import f_regression
-        # remove features with low variance
-        # selector = VarianceThreshold(threshold=0.01)
-        # selector.fit(X_train)
-        # X_train = selector.transform(X_train)
-        # X_test = selector.transform(X_test)
+        # from sklearn.feature_selection import VarianceThreshold
+        # from sklearn.feature_selection import SelectKBest
+        # from sklearn.feature_selection import f_regression
+        # # remove features with low variance
+        # # selector = VarianceThreshold(threshold=0.01)
+        # # selector.fit(X_train)
+        # # X_train = selector.transform(X_train)
+        # # X_test = selector.transform(X_test)
 
-        # configure to select all features
-        fs = SelectKBest(score_func=f_regression, k='all')
-        # learn relationship from training data
-        fs.fit(X_train, y_train)
+        # # configure to select all features
+        # fs = SelectKBest(score_func=f_regression, k='all')
+        # # learn relationship from training data
+        # fs.fit(X_train, y_train)
 
-        # apply learned relationship to training and test data
-        X_train = fs.transform(X_train)
-        X_test = fs.transform(X_test)
+        # # apply learned relationship to training and test data
+        # X_train = fs.transform(X_train)
+        # X_test = fs.transform(X_test)
 
-        # what are scores for the features
-        for i in range(len(fs.scores_)):
-            print('Feature {0}: {1}'.format(self.train_dataset.dataset.columns[i], fs.scores_[i]))
+        # # what are scores for the features
+        # for i in range(len(fs.scores_)):
+        #     print('Feature {0}: {1}'.format(self.train_dataset.dataset.columns[i], fs.scores_[i]))
 
-        # plot the scores
-        pyplot.bar([i for i in range(len(fs.scores_))], fs.scores_)
-        pyplot.show()
+        # # plot the scores
+        # pyplot.bar([i for i in range(len(fs.scores_))], fs.scores_)
+        # pyplot.show()
         
-        # Normalize data
-        from sklearn.preprocessing import StandardScaler
-        sc = StandardScaler()
-        X_train = sc.fit_transform(X_train)
-        X_test = sc.transform(X_test)
+        # # Normalize data
+        # from sklearn.preprocessing import StandardScaler
+        # sc = StandardScaler()
+        # X_train = sc.fit_transform(X_train)
+        # X_test = sc.transform(X_test)
         
 
         return X_train, X_test, y_train, y_test
