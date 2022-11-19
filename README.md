@@ -8,9 +8,9 @@ Deforestation is the permanent removal of standing forests, which occurs for a v
 
 ## Participants
 
--   Bruno Moya - 56
--   Ricard Lopez  - 56
--   Joel Poma - 56
+-   Bruno Moya - DT15
+-   Ricard Lopez  - DT15
+-   Joel Poma - DT15
 
 ## Results
 
