@@ -4,37 +4,29 @@ Code for the Nov 2022 Schneider Electric Data Science Hackaton
 
 
 ## Background
-The EU contributes 18% of total global warming gas emissions; However, it is increasingly determined to take the lead in the fight against climate change. That is why it has set itself the goal of reaching zero carbon emissions by 2050.
-
-To this end, it has put in place a wealth of resources to help achieve this goal over the next few years, and it will need your help to do so.
+Deforestation is the permanent removal of standing forests, which occurs for a variety of reasons and has many devastating consequences. The loss of trees and other vegetation can cause climate change, desertification, soil erosion, fewer crops, flooding, increased greenhouse gases in the atmosphere, and a host of problems for Indigenous people. In the last 13 years, more than 43 million hectares of forest have been devastated in the world, an area the size of California, USA. It is important to stop deforestation, as soon as possible, before the damage is irreversible. There are many ways to fight deforestation. This challenge will consist of using the help of thousands of satellites in space to capture images of the earth's surface in order to detect, as soon as possible, areas in the midst of deforestation and prevent its expansion.
 
 ## Participants
 
 -   Bruno Moya - 56
+-   Ricard Lopez  - 56
 -   Joel Poma - 56
--   Marc Alfonso - 56
 
 ## Results
 
-By Using agressive data cleaning and parsing, with categorization of variables of the dataset, we achieved a 75%+ F1-Score using Random Forest Model. 
+We have first balanced the dataset by doing oversamplgin among others. This meant, we had to also do data augmentaiton as we were adding new elements to our dataset. For that porpuse we did data augmentation, randomly choosing images from existing classes and randomly rotating them. We did not change the lightning of them as we suposed it would be bad for calculating the features.
 
-`{'f1_score': 0.7252596753363753, 'precision': 0.7229358290279416, 'recall': 0.7277690113858096, 'accuracy': 0.7025566884796834}`
+This is our result
 
-This are the results of our Cross Validation of the Model (F1 Macro Score):
+`{'f1_score': 0.809, 'precision': 0.786, 'recall': 0.833, 'accuracy': 0.714}`
 
-`Cross-validation scores: [0.74248753 0.74695766 0.74315829 0.74644212 0.80487625]
-Average cross-validation score: 0.7567843695113846`
+## Code structure
 
-These are our ROC Curves and PR Curves:
+We have all datasets working inside a same Class call dataset. Thus they are all interoperable, and we can add custom functions to make our code cleaner ad our life.
 
-![image](https://user-images.githubusercontent.com/10481058/169686805-df3284d7-5e6d-4944-bb1b-215e2abce3a1.png)
-
-![image](https://user-images.githubusercontent.com/10481058/169686900-b85c53d5-0844-42dd-9cca-be3a02517146.png)
-
-## Nuwe Report
-
-![image](https://user-images.githubusercontent.com/10481058/176244071-b081a300-af63-4b77-adf0-9ca6e011bd04.png)
-
+- Augmentation.py  does the data augmentation
+- Balance.py does the balancing of the dataset
+- Custom Image Dataset is a wrapper for our dtayaset class to work with pytorch efficiently.
 
 ## How to execute the demonstration?
 
@@ -42,3 +34,5 @@ Run the main.py example and install required libraries with PIP:
 
 - `pip install -r requirements.txt`
 - `python main.py`
+
+The code will automatically efficiently load the train and test images, train the resnet neural network and do some testing.

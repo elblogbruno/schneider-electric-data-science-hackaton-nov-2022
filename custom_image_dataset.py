@@ -4,6 +4,8 @@ from torchvision.io import read_image
 import torch
 import cv2
 
+from dataset import Dataset
+
 class CustomImageDataset(torch.utils.data.Dataset):
     def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
         self.img_labels = annotations_file.dataset
@@ -20,9 +22,9 @@ class CustomImageDataset(torch.utils.data.Dataset):
 
         # print("img_path", img_path)
         
-        # image = read_image(img_path)
-        image = cv2.imread(img_path)
-        image = cv2.resize(image, (512, 512))
+        image = read_image(img_path)
+        # image = cv2.imread(img_path)
+        # image = cv2.resize(image, (224, 224))
         label = self.img_labels.iloc[idx, 4]
 
         if self.transform:

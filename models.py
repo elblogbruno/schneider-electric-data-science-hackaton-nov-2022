@@ -11,14 +11,21 @@ import numpy as np
 from matplotlib import pyplot
 
 class ModelManager:
-    def __init__(self, train_dataset, test_dataset, target_variable_name):
+    def __init__(self, train_dataset, test_dataset, target_variable_name, custom_dataset  = None):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
+        self.custom_dataset = custom_dataset
+
         self.target_variable_name = target_variable_name
 
     def get_data_for_training(self):
         # drop target variable from dataset
-        Train_x = self.train_dataset.dataset.drop(self.target_variable_name, axis=1).values.tolist()
+        # check if it is a pandas dataframe
+        if self.custom_dataset is not None:
+            Train_x = self.custom_dataset
+        else:
+            Train_x = self.train_dataset.dataset.drop(self.target_variable_name, axis=1).values.tolist()
+        
         Train_y = self.train_dataset.dataset[self.target_variable_name].values.tolist()
 
         # split dataset into training and test set
@@ -81,7 +88,7 @@ class ModelManager:
 
         from sklearn.model_selection import cross_val_score
 
-        models = [RandomForestClassifier(n_estimators=200, random_state=0)]
+        models = [KNeighborsClassifier(), RandomForestClassifier(n_estimators=200, random_state=0)]
         # models = [KNeighborsClassifier()]
         # models = [RandomForestClassifier(n_estimators=200, random_state=0), KNeighborsClassifier(), GaussianNB(), LogisticRegression(penalty='l2', C=1.0)]
 
@@ -108,7 +115,7 @@ class ModelManager:
 
         return best_model
 
-    def find_best_parameter(self, model):
+    def find_best_parameters(self, model):
         from sklearn.model_selection import GridSearchCV
         from sklearn.metrics import make_scorer
         from sklearn.metrics import accuracy_score

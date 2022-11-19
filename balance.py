@@ -57,7 +57,7 @@ def img_augmentation(X, y, X_res, y_res, train_images, train_dataset):
     
 def oversampling(train_dataset, train_images, augment_images):
     print("Oversampling...")
-    oversample = imblearn.over_sampling.RandomOverSampler(sampling_strategy='minority')
+    oversample = imblearn.over_sampling.RandomOverSampler(sampling_strategy='all')
 
     X = train_dataset.dataset.drop(train_dataset.get_target_variable(), axis=1)
     y = train_dataset.dataset[train_dataset.get_target_variable()]
@@ -72,14 +72,27 @@ def oversampling(train_dataset, train_images, augment_images):
 
 def undersampling(train_dataset, train_images):
     print("Undersampling...")
-    # undersample = imblearn.under_sampling.RandomUnderSampler(sampling_strategy='majority')
-    # mod_train_dataset, mod_train_images = undersample.fit_resample(train_dataset.dataset, train_images.dataset)
+    undersample = imblearn.under_sampling.RandomUnderSampler(sampling_strategy='all')
 
-    # train_dataset.dataset = mod_train_dataset
-    # train_images.dataset = mod_train_images
+    X = train_dataset.dataset.drop(train_dataset.get_target_variable(), axis=1)
+    y = train_dataset.dataset[train_dataset.get_target_variable()]
 
-    # print("Done")
-    # return train_dataset, train_images
+    print(y)
+
+    X_res, y_res = undersample.fit_resample(X, y)
+
+    # get removed X and y
+    removed_X = X[X.index.isin(X_res.index) == False]
+    removed_y = y[y.index.isin(y_res.index) == False]
+
+    # remove images from train_images
+    for index, row in removed_X.iterrows():
+        img_path = cv2.imread(row['example_path'])
+        train_images.dataset = np.delete(train_images.dataset, np.where(train_images.dataset == img_path), axis=0)
+    
+    train_dataset.dataset = pd.concat([X_res, y_res], axis=1)
+
+    return train_dataset, train_images
 
 def smote(train_dataset, train_images):
     print("Smote...")

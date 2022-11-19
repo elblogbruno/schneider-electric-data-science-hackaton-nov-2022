@@ -1,13 +1,13 @@
-from sklearn.neighbors import KNeighborsClassifier
 import torch
 from dataset import Dataset
 import os
+
 from models import ModelManager
 from balance import start_balancing
 from performance import Performance
+from resnet import load_and_train_model, test_model
 from store_models import StoreModels
 import cv2
-import pandas as pd
 
 # TAREAS
 # 1. Cargar Datos 
@@ -52,17 +52,12 @@ import pandas as pd
 
 
 def load_and_process_data(target_variable_name, force = False):
-    if os.path.exists('result/train_processed_with_images.csv') == False or force:
+    if os.path.exists('result/train_processed.csv') == False or force:
         print("[MAIN] First time executing...")
         
         train_dataset = Dataset(type='csv', file_name='train/train.csv', target_variable_name=target_variable_name)
         # train_dataset.dataset es un DataFrame de pandas con el csv
 
-        # get columns that are strings and categorical
-        # categorical_columns = train_dataset.pre_process.get_categorical_columns()
-        # train_dataset.pre_process.categorize_data(categorical_columns)     
-        # train_dataset.save_dataset(file_name='result/train_processed.csv')
-        
         print("[MAIN] DATASET BALANCED")
         print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset))
             
@@ -71,19 +66,11 @@ def load_and_process_data(target_variable_name, force = False):
         # img_dataset_train = Dataset(type='img', file_name='train_test_data/train', img_size=256, black_and_white=True) # 256x256 black and white
         img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
         
-        # img_dataset_train.dataset seria un array de imagenes 
-        # img_dataset_train.dataset[0] seria la primera imagen
-
-
-        # try to load the images from the csv
-        # cv2.imshow('image', img_dataset_train.dataset[0])
-        # cv2.waitKey(0)
-
         # do data augmentation
-        train_dataset, img_dataset_train = start_balancing(train_dataset, img_dataset_train, type='oversampling', augment_images=True)
+        train_dataset, img_dataset_train = start_balancing(train_dataset, img_dataset_train, type='oversampling')
 
         print("[MAIN] Finally is DATASET BALANCED?")
-        print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset))
+        print(train_dataset.pre_process.get_dataset_balance(train_dataset.dataset)) # should be balanced
 
         # save the dataset augmented with the images so we don't have to do it again
         train_dataset.save_dataset(file_name='result/train_processed.csv')
@@ -92,53 +79,19 @@ def load_and_process_data(target_variable_name, force = False):
 
         print(len(train_dataset.dataset))
         print(len(img_dataset_train.dataset))
-        # add a new column with the images numpy arrays to the dataset
-        # train_dataset.dataset.insert(0, 'images', img_dataset_train.dataset.tolist(), True)
-        img_list = img_dataset_train.dataset
-        print(len(img_list))
-
-        train_dataset.dataset.loc[:, 'images'] = img_list
-
-        print("[MAIN] DATASET JOINED WITH IMAGES")
-        train_dataset.save_dataset(file_name='result/train_processed_with_images.csv')
             
     else:
         print("[MAIN] Loading dataset from folder...")
         train_dataset = Dataset(type='csv', file_name='result/train_processed.csv', target_variable_name=target_variable_name)
         img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
 
-        train_dataset.save_dataset(file_name='result/train_processed_with_images.csv')
-        
-        train_dataset.remove_headers(['example_path'])
-
     print("[MAIN] Loading test dataset...")
     
-    if os.path.exists('result/test_processed_with_images.csv') == False or force:
-        test_dataset = Dataset(type='csv', file_name='test/test.csv', target_variable_name=target_variable_name)
-        
-        # categorical_columns = test_dataset.pre_process.get_categorical_columns()
-        # test_dataset.pre_process.categorize_data(categorical_columns)      # categorical_columns = ['pollutant']
-        img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
-        print(len(test_dataset.dataset))
-        print(len(img_dataset_test.dataset))
-        # add a new column with the images numpy arrays to the dataset
-        # train_dataset.dataset.insert(0, 'images', img_dataset_train.dataset.tolist(), True)
-        img_list = img_dataset_test.dataset
-        print(len(img_list))
+    print("[MAIN] Loading test dataset from folder...")
+    test_dataset = Dataset(type='csv', file_name='result/test_processed.csv', target_variable_name=target_variable_name)
+    img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
 
-        test_dataset.dataset.loc[:, 'images'] = img_list
-        test_dataset.dataset = test_dataset.dataset.astype({'images': object})
-
-        print("[MAIN] DATASET JOINED WITH IMAGES")
-        test_dataset.save_dataset(file_name='result/test_processed_with_images.csv')
-
-        # test_dataset.save_dataset(file_name='result/test_processed.csv')
-    else:
-        print("[MAIN] Loading test dataset from folder...")
-        test_dataset = Dataset(type='csv', file_name='result/test_processed.csv', target_variable_name=target_variable_name)
-        img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
-
-    return train_dataset, test_dataset
+    return train_dataset, test_dataset, img_dataset_train, img_dataset_test
 
 def join_data_with_images(img_dataset, dataset):
     # add a new column with the images numpy arrays to the dataset
@@ -175,21 +128,23 @@ def join_data_with_images(img_dataset, dataset):
     print("[MAIN] DATASET JOINED WITH IMAGES")
     return img_dataset, dataset
 
-
-
-def save_final_result(test_dataset, model):
+def save_final_result(pred_y):
     import pandas as pd
     print("[MAIN] Saving final result...")
-    pred_y = model.predict(test_dataset.dataset)
+    dic = { "target" : {} }
 
-    # Empty dataset with two columns (target variable and predicted value)
-    final_dataset = pd.DataFrame(columns=['test_index', 'label'])  
-    final_dataset['test_index'] = range(len(test_dataset.dataset))
-    final_dataset['label'] = pred_y
+    for i in range(len(pred_y)):
+        dic['target'][i] = int(pred_y[i])
 
-    final_dataset.to_csv('predictions.csv', index = False, columns=['test_index', 'label']) 
-    final_dataset.to_json('predictions.json')
+    import json
+    # SAVE to .json file
+    with open('predictions.json', 'w') as fp:
+        json.dump(dic, fp)
 
+    
+"""
+DEPRECATED CODE
+"""
 def get_features(img_dataset_train, img_size=332, name='train', black_and_white = False):
     import numpy as np
     name_file = name+'_features.npy'
@@ -201,7 +156,14 @@ def get_features(img_dataset_train, img_size=332, name='train', black_and_white 
 
     from torchvision  import transforms
     # Transform the image, so it becomes readable with the model
+    # transform = transforms.Compose([
+    #     transforms.ToTensor()                              
+    # ])
+
     transform = transforms.Compose([
+        # transforms.ToPILImage(),
+        # transforms.CenterCrop(512),
+        # transforms.Resize(img_size),
         transforms.ToTensor()                              
     ])
 
@@ -239,50 +201,12 @@ def get_features(img_dataset_train, img_size=332, name='train', black_and_white 
 
 if __name__ == '__main__':
     target_variable_name = 'label'
-    # train_dataset, test_dataset = load_and_process_data(target_variable_name, force= False)
-    train_dataset = Dataset(type='csv', file_name='result/train_processed.csv', target_variable_name=target_variable_name)
-    img_dataset_train = Dataset(type='img', file_name='train_test_data/train') # Original size
-    img_dataset_test = Dataset(type='img', file_name='train_test_data/test') # Original size
+
+    train_dataset, test_dataset, img_dataset_train, img_dataset_test = load_and_process_data(target_variable_name, force= False)
     
-    features = get_features(img_dataset_train, name='train', img_size=332)
-    features_test = get_features(img_dataset_test, name='test', img_size=332)
-    
-    print(features.shape)
-    print(features_test.shape)
-        
-    from sklearn.model_selection import train_test_split
+    # we load the data into pytorch tensors and train the resnet model
+    model = load_and_train_model(train_dataset, target_variable_name, epochs = 20)
 
-    Train_y = train_dataset.dataset['label']
+    labels_pred = test_model(img_dataset_test)
 
-    X_train, X_test, y_train, y_test = train_test_split(features, Train_y, test_size=0.2, random_state=0)
-    
-    from sklearn.cluster import KMeans
-
-    # Initialize the model
-    model = KNeighborsClassifier()
-    # model = KMeans(n_clusters=3, random_state=42)
-    
-
-    # Fit the data into the model
-    model.fit(X_train, y_train)
-
-    # Extract the labels
-    # labels = model.labels_
-
-    # print(labels) # [4 3 3 ... 0 0 0]
-
-    # Predict the labels
-    pred_y = model.predict(X_test)
-
-    #print(pred_y) # [4 3 3 ... 0 0 0]
-
-    print(len(pred_y))
-    print(len(y_test))
-
-    # accuracy = accuracy_score(test_dataset.dataset['label'], pred_y)
-    performance = Performance(y_test, pred_y)
-    print(performance.get_performance())
-
-
-
-
+    save_final_result(labels_pred)
